@@ -4,7 +4,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import plotly.express as px
-import plotly.graph_objects as go
 from PIL import Image
 
 # -----------------------------
@@ -24,9 +23,6 @@ st.markdown("""
     <style>
     .main {
         background-color: #f8f9fa;
-    }
-    .css-1d391kg {
-        font-family: 'Segoe UI', sans-serif;
     }
     .stButton>button {
         background-color: #2ca02c;
@@ -65,29 +61,48 @@ st.sidebar.markdown("---")
 st.sidebar.markdown("📊 *Data: Kenya Forest Service | 2024*")
 
 # -----------------------------
-# Mock Data (Replace with your CSV loading in production)
+# Mock Data Loader (Replace with real CSVs in production)
 # -----------------------------
 @st.cache_data
 def load_data():
-    # Simulate GPS data
+    # Simulate df_gps.csv with realistic Kenya bounds
     np.random.seed(42)
-    n = 5000
-    lats = np.random.uniform(-4.0, 5.0, n)
-    lons = np.random.uniform(34.0, 42.0, n)
-    dates = pd.date_range("2023-01-01", "2024-12-31", periods=n)
-    seedlings = np.random.lognormal(9, 2, n).astype(int)
+    n = 76562  # Matches cleaned data count
+
+    # Realistic Kenya lat/lon bounds
+    lats = np.random.uniform(-4.1, 5.3, n)
+    lons = np.random.uniform(33.0, 42.0, n)
+
+    # Dates over multiple years
+    dates = pd.to_datetime(np.random.choice(pd.date_range("2022-01-01", "2024-12-31"), n))
     months = [d.month for d in dates]
+
+    # Seedlings planted (log-normal to match skew)
+    seedlings = np.random.lognormal(9, 2, n).astype(int)
+    seedlings = np.clip(seedlings, 1, 500000)  # Match outlier filtering
+
+    # Simulate clusters (1,642 total)
     clusters = np.random.randint(0, 1642, n)
-    # Assign some to northern counties
-    region = ["Northern" if lat < 1.0 and lon > 38.0 else "Central/South" for lat in lats]
-    
+
+    # Assign region: Northern (arid) vs Central/South
+    # Using lat < 1.0 AND lon > 38.0 to approximate Turkana, Wajir, Mandera
+    region = [
+        "Northern" if lat < 1.0 and lon > 38.0 else "Central/South"
+        for lat, lon in zip(lats, lons)
+    ]
+
+    # Create DataFrame
     df_gps = pd.DataFrame({
-        'lat': lats, 'lon': lons, 'plantingdate': dates,
-        'seedlingsplanted': seedlings, 'month': months,
-        'cluster': clusters, 'region': region
+        'lat': lats,
+        'lon': lons,
+        'plantingdate': dates,
+        'seedlingsplanted': seedlings,
+        'month': months,
+        'cluster': clusters,
+        'region': region
     })
-    
-    # County equity data
+
+    # Simulate county_tree_planting_summary.csv (Top 10 from PDF)
     equity_data = pd.DataFrame({
         'Rank': range(1, 11),
         'County': ['Samburu', 'Mandera', 'Turkana', 'Kajiado', 'Marsabit',
@@ -97,9 +112,10 @@ def load_data():
         'Population (K)': [358, 1026, 985, 1012, 459, 730, 1131, 623, 1421, 4397],
         'Trees per 10K': [3905, 4284, 5524, 8582, 8598, 10448, 24743, 31507, 34953, 38993]
     })
-    
+
     return df_gps, equity_data
 
+# Load data
 df_gps, equity_df = load_data()
 
 # -----------------------------
@@ -110,7 +126,7 @@ if menu == "Overview":
     st.markdown("### *A Data-Driven Approach to Equitable Reforestation*")
     st.markdown("""
     This dashboard analyzes **76,562** tree planting events across Kenya to uncover **where**, **when**, and **how fairly** reforestation is happening.
-    
+
     > 🌱 *Reforestation isn't just about planting trees — it's about planting them where they matter most.*
     """)
 
@@ -132,7 +148,8 @@ if menu == "Overview":
 elif menu == "Hotspots Map":
     st.title("📍 Planting Hotspots & Gaps")
 
-    st.map(df_gps[['lat', 'lon']].sample(1000))  # Streamlit native map (simple)
+    # Show map
+    st.map(df_gps[['lat', 'lon']].sample(1000))  # Streamlit native map
 
     st.markdown("### 🔍 Major Hotspots")
     hotspots = ["Nairobi", "Nakuru", "Kisumu", "Mombasa", "Eldoret", "Thika"]
