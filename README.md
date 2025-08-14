@@ -4,7 +4,7 @@
 
 ---
 
-## 📌 Overview  
+## 📌 Overview 
 This Jupyter notebook presents a comprehensive spatial and temporal analysis of tree planting activities across Kenya, leveraging GPS-tagged field data and county-level summaries to uncover **where**, **when**, and **how equitably** reforestation is happening.
 
 Built for the **Kenya Forest Service** and county development partners, this project transforms raw planting data into actionable insights—guiding smarter, fairer, and ecologically aligned reforestation strategies.
